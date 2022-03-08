@@ -197,48 +197,52 @@ def read_graph_file(filename):
 if __name__ == '__main__':
     print ("K medoids clustering in python")
     print ("Input graph file")
+    graph_file = "graph_file.txt"
     
     # ----------------------------------------------------------------------------------------------
     # -- test the basic working on the distance matrix reduction
     # -- No home vertex and current vertex
     # ----------------------------------------------------------------------------------------------
-    #distance_matrix = np.array(read_graph_file("graph_file.txt"))
-    #print(distance_matrix.shape)
-    #labels, cluster_centers = cluster_vertices(distance_matrix, 6)
-    #unique_labels = set(labels)
-    #new_dist_mat = get_distance_matrix(distance_matrix, labels, cluster_centers)
-    #test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
+    if len(sys.argv) == 1:
+        distance_matrix = np.array(read_graph_file(graph_file))
+        print(distance_matrix.shape)
+        labels, cluster_centers = cluster_vertices(distance_matrix, 6)
+        unique_labels = set(labels)
+        new_dist_mat = get_distance_matrix(distance_matrix, labels, cluster_centers)
+        test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
     
     # ----------------------------------------------------------------------------------------------
     # -- test with home vertex
     # ----------------------------------------------------------------------------------------------
-    ##home_vertex = 0
-    ##distance_matrix = np.array(read_graph_file("graph_file.txt"))
-    ##print("Shape of input matrix: ", distance_matrix.shape)
-    ### -- cluster vertices after removing home vertex
-    ##clipped_distance_matrix  = prep_distance_matrix_tour(distance_matrix, home_vertex)
-    ### -- cluster the vertices
-    ##labels, cluster_centers = cluster_vertices(clipped_distance_matrix, 6)
-    ### -- get new distance matrix from original distance_matrix
-    ##new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex)
-    ### -- check
-    ##test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
+    if len(sys.argv) == 2:
+        home_vertex = int(sys.argv[1])
+        distance_matrix = np.array(read_graph_file(graph_file))
+        print("Shape of input matrix: ", distance_matrix.shape)
+        # -- cluster vertices after removing home vertex
+        clipped_distance_matrix  = prep_distance_matrix_tour(distance_matrix, home_vertex)
+        # -- cluster the vertices
+        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, 6)
+        # -- get new distance matrix from original distance_matrix
+        new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex)
+        # -- check
+        test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
     
     # ----------------------------------------------------------------------------------------------
     # -- test with home and current vertex
     # ----------------------------------------------------------------------------------------------
-    home_vertex = 0
-    cur_vertex = 10
-    distance_matrix = np.array(read_graph_file("graph_file.txt"))
-    print("Shape of input matrix: ", distance_matrix.shape)
-    # -- cluster vertices after removing home vertex
-    clipped_distance_matrix = prep_distance_matrix_path(distance_matrix, home_vertex, cur_vertex)
-    # -- cluster the vertices
-    labels, cluster_centers = cluster_vertices(clipped_distance_matrix, 6)
-    # -- get new distance matrix
-    new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex, cur_vertex)
-    # -- check
-    test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
+    if len(sys.argv) == 3:
+        home_vertex = int(sys.argv[1])
+        cur_vertex = int(sys.argv[2])
+        distance_matrix = np.array(read_graph_file(graph_file))
+        print("Shape of input matrix: ", distance_matrix.shape)
+        # -- cluster vertices after removing home vertex
+        clipped_distance_matrix = prep_distance_matrix_path(distance_matrix, home_vertex, cur_vertex)
+        # -- cluster the vertices
+        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, 6)
+        # -- get new distance matrix
+        new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex, cur_vertex)
+        # -- check
+        test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
     
     
     
