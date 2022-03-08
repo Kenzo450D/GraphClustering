@@ -20,7 +20,6 @@ def prep_distance_matrix_tour(distance_matrix, home_vertex):
     """ Prepares the distance matrix for a tour. The home_vertex is removed from the distance matrix.
     The rest of the vertices are clustered
     """
-    #home_distances = distance_matrix[home_vertex,:]
     distance_matrix = np.delete(distance_matrix, home_vertex, 0)
     distance_matrix = np.delete(distance_matrix, home_vertex, 1)
     # -- return the distance_matrix
@@ -31,21 +30,17 @@ def prep_distance_matrix_path(distance_matrix, home_vertex, current_vertex):
     """ Prepares the distance matrix for a tour. The home_vertex and current_vertex 
     is removed from the distance matrix. The rest of the vertices are clustered.
     """
-    cur_distances = distance_matrix[cur_vertex,:]
-    #for cd in cur_distances:
-        #print (f"{cd}", end="\t")
-    #print()    
     # -- as removing the home_vertex will change the indices in the matrix
     if current_vertex > home_vertex:
         current_vertex = current_vertex - 1
+    if home_vertex > current_vertex:
+        home_vertex = home_vertex - 1
     
     # -- delete the vertices
     distance_matrix = np.delete(distance_matrix, home_vertex, 0)
     distance_matrix = np.delete(distance_matrix, home_vertex, 1)
     distance_matrix = np.delete(distance_matrix, current_vertex, 0)
     distance_matrix = np.delete(distance_matrix, current_vertex, 1)
-    #print ("Func: prep_distance_matrix_path: Clipped Distance_matrix")
-    #print_distance_matrix(distance_matrix)
     return distance_matrix
 
 
@@ -58,43 +53,14 @@ def cluster_vertices(distance_matrix, n_clusters):
     # -- get the metric
     usr_def_metric = get_user_metric(distance_matrix)
     n_vertices = len(distance_matrix)
+    # make the variables of a graph in a linear space X
+    # this is possible as we have a custom distance metric defined
     X = np.linspace(0,n_vertices-1,n_vertices).astype('int')
     X = X.reshape(-1,1) # make it a column array
     cobj = KMedoids(n_clusters, metric=usr_def_metric, method='pam', init='build').fit(X)
     labels = cobj.labels_
     cluster_centers = cobj.cluster_centers_
     return labels, cluster_centers
-
-
-def get_vertex_map(distance_matrix, labels, cluster_centers):
-    """ Creates a vertex map using labels
-    vertex_map takes the regular vertex and converts it to new vertex ID.
-    rev_vertex_map takes a converted vertex ID and converts it back to the old vertex ID.
-    """
-    vertex_map = {}
-    rev_vertex_map = {}
-    # -- the number of unique labels are number of vertices
-    # the labels would convert regular nodes to the converted node 
-    # (this isn't really necessary as we'll be deleting the vertices anyway)
-    # home vertex should be vertex zero
-    cluster_centers = cluster_centers.tolist()
-    print (cluster_centers)
-    for new_v_id, cc in enumerate(cluster_centers):
-        print ("cc: ", cc[0])
-        print ("type(cc): ", type(cc))
-        vertex_map[cc[0]] = new_v_id
-        rev_vertex_map[new_v_id] = cc[0]
-
-    for v_id, l in enumerate(labels):
-        print (f"Vertex: {v_id}\tLabel: {l}\tCluster_center: {cluster_centers[l]}")
-        
-    print ("Vertex map: ")
-    for key, val in vertex_map.items():
-        print (f"Key: {key} Val: {val}")
-    
-    print ("Reverse Vertex map: ")
-    for key, val in rev_vertex_map.items():
-        print (f"Key: {key} Val: {val}")
    
    
 def get_distance_matrix(distance_matrix, labels, cluster_centers):
@@ -198,6 +164,7 @@ if __name__ == '__main__':
     print ("K medoids clustering in python")
     print ("Input graph file")
     graph_file = "graph_file.txt"
+    n_clusters = 6
     
     # ----------------------------------------------------------------------------------------------
     # -- test the basic working on the distance matrix reduction
@@ -206,7 +173,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1:
         distance_matrix = np.array(read_graph_file(graph_file))
         print(distance_matrix.shape)
-        labels, cluster_centers = cluster_vertices(distance_matrix, 6)
+        labels, cluster_centers = cluster_vertices(distance_matrix, n_clusters)
         unique_labels = set(labels)
         new_dist_mat = get_distance_matrix(distance_matrix, labels, cluster_centers)
         test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
@@ -221,7 +188,7 @@ if __name__ == '__main__':
         # -- cluster vertices after removing home vertex
         clipped_distance_matrix  = prep_distance_matrix_tour(distance_matrix, home_vertex)
         # -- cluster the vertices
-        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, 6)
+        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, n_clusters)
         # -- get new distance matrix from original distance_matrix
         new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex)
         # -- check
@@ -238,7 +205,7 @@ if __name__ == '__main__':
         # -- cluster vertices after removing home vertex
         clipped_distance_matrix = prep_distance_matrix_path(distance_matrix, home_vertex, cur_vertex)
         # -- cluster the vertices
-        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, 6)
+        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, n_clusters)
         # -- get new distance matrix
         new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex, cur_vertex)
         # -- check
