@@ -1,3 +1,4 @@
+from email.policy import default
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -158,6 +159,78 @@ def read_graph_file(filename):
             file_data.append(line_data)
             line = f.readline()
     return file_data
+
+def print_cluster_prize(labels, init_prize_list, clustered_prize_list, cluster_centers, home_vertex, cur_vertex):
+    clusters_vertices = defaultdict(lambda:[])
+    prize_clusters = defaultdict(lambda:[])
+
+    for idx, l in enumerate(labels):
+        cluster_id = cluster_centers[l]
+        if (idx >= home_vertex):
+            idx += 1
+        if (idx >= cur_vertex) :
+            idx += 1
+        clusters_vertices[cluster_centers[l]].append(idx)
+        prize_clusters[cluster_centers[l]].append(init_prize_list[idx])
+    
+    # -- print the prize list
+    clusters_vertices = dict(clusters_vertices)
+    prize_clusters = dict(prize_clusters)
+    for id,c in enumerate(cluster_centers):
+        print (f"Cluster center: {c}")
+        print (f"Prize: {clustered_prize_list[id]}")
+        if c in clusters_vertices:
+            print (f"Element prizes:")
+            for elem_idx, v_id in enumerate(clusters_vertices[c]):
+                print(f"\tVertex:{clusters_vertices[c][elem_idx]}\tPrize: {prize_clusters[c][elem_idx]}")
+        else:
+            print(f"Element not clustered")
+        print("-"*50)
+    return
+            
+        
+
+def get_average_prize_clusters(labels, cluster_centers, init_prize, home_vertex=None, cur_vertex=None):
+    new_prize_dict = defaultdict(lambda:0)
+    n_elements_cluster = defaultdict(lambda:0)
+    if home_vertex != None:
+        labels += 1
+        new_prize_dict[home_vertex] = init_prize[home_vertex]
+    if cur_vertex != None:
+        labels += 1
+        new_prize_dict[cur_vertex] = init_prize[cur_vertex]
+        
+    # -- get off the prizes from the labels
+    for elem_idx, l in enumerate(labels):
+        cluster_id = cluster_centers[l]
+        if (elem_idx >= home_vertex):
+            elem_idx += 1
+        if (elem_idx >= cur_vertex) :
+            elem_idx += 1
+        new_prize_dict[cluster_id] += init_prize[elem_idx]
+        n_elements_cluster[cluster_id] += 1
+    
+    n_elements_cluster = dict(n_elements_cluster)
+    new_prize_dict = dict(new_prize_dict)
+    # -- divide by the number of elements
+    for key, _ in n_elements_cluster.items():
+        new_prize_dict[key] = new_prize_dict[key] / n_elements_cluster[key] 
+    
+    # -- convert to list
+    prize_list = []
+    new_prize_dict = dict(new_prize_dict)
+    for c in cluster_centers:
+        prize_list.append(new_prize_dict[c])
+    return prize_list, labels
+
+
+def read_prize_file(filename):
+    with open(filename, "r") as f:
+        line = f.readline()
+        line = line.strip()
+        line = line.split()
+        line_data = [float(i) for i in line]
+        return line_data
         
 
 if __name__ == '__main__':
@@ -165,6 +238,12 @@ if __name__ == '__main__':
     print ("Input graph file")
     graph_file = "graph_file.txt"
     n_clusters = 6
+    prize_file = "prize_list.txt"
+    prizes = np.array(read_prize_file(prize_file))
+    print (prizes)
+    print(prizes.shape)
+    # sys.exit(0)
+
     
     # ----------------------------------------------------------------------------------------------
     # -- test the basic working on the distance matrix reduction
@@ -205,11 +284,15 @@ if __name__ == '__main__':
         # -- cluster vertices after removing home vertex
         clipped_distance_matrix = prep_distance_matrix_path(distance_matrix, home_vertex, cur_vertex)
         # -- cluster the vertices
-        labels, cluster_centers = cluster_vertices(clipped_distance_matrix, n_clusters)
+        labels, init_cluster_centers = cluster_vertices(clipped_distance_matrix, n_clusters)
         # -- get new distance matrix
-        new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, cluster_centers, home_vertex, cur_vertex)
+        new_dist_mat, cluster_centers = get_distance_matrix_with_home(distance_matrix, labels, init_cluster_centers, home_vertex, cur_vertex)
         # -- check
         test_new_dist_mat(distance_matrix, new_dist_mat, cluster_centers)
+        # -- prizes
+        new_prize_list, new_labels  = get_average_prize_clusters(labels,cluster_centers, prizes, home_vertex, cur_vertex)
+        # -- test the prizes
+        print_cluster_prize(labels, prizes, new_prize_list, cluster_centers, home_vertex, cur_vertex)
     
     
     
